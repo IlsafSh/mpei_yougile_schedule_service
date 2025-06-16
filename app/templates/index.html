@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPEI YouGile Schedule Service</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-calendar-alt"></i> MPEI YouGile Schedule Service</h1>
+            <p>Сервис для сбора, анализа и интеграции учебного расписания БАРС НИУ МЭИ с YouGile</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="parse">
+                <i class="fas fa-download"></i> Парсинг расписания
+            </button>
+            <button class="tab-button" data-tab="yougile">
+                <i class="fas fa-upload"></i> Интеграция с YouGile
+            </button>
+            <button class="tab-button" data-tab="analysis">
+                <i class="fas fa-search"></i> Анализ расписания
+            </button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Парсинг расписания -->
+            <div id="parse-tab" class="tab-content active">
+                <div class="card">
+                    <h2><i class="fas fa-download"></i> Парсинг расписания</h2>
+                    <form id="parse-form">
+                        <div class="form-group">
+                            <label for="parse-name">Название объекта:</label>
+                            <input type="text" id="parse-name" name="name" placeholder="Например: ЭР-05-24" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="parse-type">Тип объекта:</label>
+                            <select id="parse-type" name="schedule_type" required>
+                                <option value="group">Группа</option>
+                                <option value="teacher">Преподаватель</option>
+                                <option value="room">Аудитория</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="parse-weeks">Максимальное количество недель:</label>
+                                <input type="number" id="parse-weeks" name="max_weeks" value="21" min="1" max="52">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="parse-save" name="save_to_file" checked>
+                                    Сохранить в файл
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="parse-cleanup" name="cleanup_files">
+                                    Удалить вспомогательные файлы после завершения
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Начать парсинг
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Интеграция с YouGile -->
+            <div id="yougile-tab" class="tab-content">
+                <div class="card">
+                    <h2><i class="fas fa-upload"></i> Интеграция с YouGile</h2>
+                    <form id="yougile-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="yougile-login">Логин YouGile:</label>
+                                <input type="email" id="yougile-login" name="login" placeholder="email@example.com" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="yougile-password">Пароль YouGile:</label>
+                                <input type="password" id="yougile-password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="yougile-schedule-name">Название расписания:</label>
+                                <input type="text" id="yougile-schedule-name" name="schedule_name" placeholder="ЭР-05-24" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="yougile-project-title">Название проекта:</label>
+                                <input type="text" id="yougile-project-title" name="project_title" value="Учебное расписание">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="yougile-schedule-data">Данные расписания (JSON):</label>
+                            <textarea id="yougile-schedule-data" name="schedule_data" rows="10" placeholder="Вставьте JSON данные расписания или используйте результат парсинга" required></textarea>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Интегрировать расписание
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Анализ расписания -->
+            <div id="analysis-tab" class="tab-content">
+                <div class="analysis-methods">
+                    <div class="method-tabs">
+                        <button class="method-tab active" data-method="common">Общее планирование</button>
+                        <button class="method-tab" data-method="split">Сплит планирование</button>
+                    </div>
+
+                    <!-- Поиск общего окна -->
+                    <div id="common-method" class="method-content active">
+                        <div class="card">
+                            <h3><i class="fas fa-search"></i> Поиск общего окна</h3>
+                            <form id="common-form">
+                                <!-- Данные YouGile -->
+                                <div class="yougile-section">
+                                    <h4>Данные YouGile</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="common-login">Логин YouGile:</label>
+                                            <input type="email" id="common-login" name="login" placeholder="email@example.com" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="common-password">Пароль YouGile:</label>
+                                            <input type="password" id="common-password" name="password" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="common-project-title">Название проекта:</label>
+                                            <input type="text" id="common-project-title" name="project_title" value="Учебное расписание">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Основные параметры -->
+                                <div class="search-section">
+                                    <h4>Параметры поиска</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="start-date">Дата начала поиска:</label>
+                                            <input type="date" id="start-date" name="start_date" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="end-date">Дата окончания поиска:</label>
+                                            <input type="date" id="end-date" name="end_date" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="required-duration">Требуемая продолжительность (часы):</label>
+                                            <input type="number" id="required-duration" name="required_duration" step="0.1" min="0.1" value="1.0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="min-gap-hours">Минимальный промежуток (часы):</label>
+                                            <input type="number" id="min-gap-hours" name="min_gap_hours" step="0.01" min="0" value="0.05">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="earliest-start-time">Начало рабочего времени:</label>
+                                            <input type="time" id="earliest-start-time" name="earliest_start_time" value="09:00">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="latest-end-time">Конец рабочего времени:</label>
+                                            <input type="time" id="latest-end-time" name="latest_end_time" value="20:00">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="participants">Участники (названия досок, через запятую):</label>
+                                        <input type="text" id="participants" name="participants" placeholder="А-08-24-short, ЭР-05-24" required>
+                                    </div>
+                                </div>
+
+                                <!-- Критерии оптимизации -->
+                                <div class="criteria-section">
+                                    <h4>Критерии оптимизации</h4>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="maximize-participants" name="maximize_participants" checked>
+                                                Максимизировать количество участников
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="minimize-start-time" name="minimize_start_time" checked>
+                                                Минимизировать время начала
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="minimize-total-idle" name="minimize_total_idle" checked>
+                                                Минимизировать суммарный простой
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="minimize-max-gap" name="minimize_max_gap" checked>
+                                                Минимизировать максимальный промежуток
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="include-holidays" name="include_holidays">
+                                                Включать праздничные дни
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="include-weekends" name="include_weekends">
+                                                Включать выходные дни
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Веса критериев -->
+                                <div class="weights-section">
+                                    <h4>Веса критериев</h4>
+
+                                    <div class="weight-control">
+                                        <label for="weight-participants">Вес участников: <span id="weight-participants-value">1.0</span></label>
+                                        <input type="range" id="weight-participants" name="weight_participants" min="0" max="10" step="0.1" value="1.0">
+                                    </div>
+
+                                    <div class="weight-control">
+                                        <label for="weight-start-time">Вес времени начала: <span id="weight-start-time-value">1.0</span></label>
+                                        <input type="range" id="weight-start-time" name="weight_start_time" min="0" max="10" step="0.1" value="1.0">
+                                    </div>
+
+                                    <div class="weight-control">
+                                        <label for="weight-total-idle">Вес суммарного простоя: <span id="weight-total-idle-value">1.0</span></label>
+                                        <input type="range" id="weight-total-idle" name="weight_total_idle" min="0" max="10" step="0.1" value="1.0">
+                                    </div>
+
+                                    <div class="weight-control">
+                                        <label for="weight-max-gap">Вес максимального промежутка: <span id="weight-max-gap-value">1.0</span></label>
+                                        <input type="range" id="weight-max-gap" name="weight_max_gap" min="0" max="10" step="0.1" value="1.0">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Найти общее окно
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Поиск сплит окна -->
+                    <div id="split-method" class="method-content">
+                        <div class="card">
+                            <h3><i class="fas fa-search"></i> Поиск сплит окна</h3>
+                            <form id="split-form">
+                                <!-- Данные YouGile -->
+                                <div class="yougile-section">
+                                    <h4>Данные YouGile</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="split-login">Логин YouGile:</label>
+                                            <input type="email" id="split-login" name="login" placeholder="email@example.com" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="split-password">Пароль YouGile:</label>
+                                            <input type="password" id="split-password" name="password" required>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="split-project-title">Название проекта:</label>
+                                            <input type="text" id="split-project-title" name="project_title" value="Учебное расписание">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Параметры сплит-окна -->
+                                <div class="search-section">
+                                    <h4>Параметры поиска сплит-окна</h4>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="split-start-date">Дата начала поиска:</label>
+                                            <input type="date" id="split-start-date" name="start_date" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="split-end-date">Дата окончания поиска:</label>
+                                            <input type="date" id="split-end-date" name="end_date" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="total-duration">Общая продолжительность (часы):</label>
+                                            <input type="number" id="total-duration" name="total_duration" step="0.1" min="0.1" value="4.0" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="min-segment-duration">Минимальная продолжительность сегмента (часы):</label>
+                                            <input type="number" id="min-segment-duration" name="min_segment_duration" step="0.1" min="0.1" value="0.5">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="max-segments">Максимальное количество сегментов:</label>
+                                            <input type="number" id="max-segments" name="max_segments" min="2" max="10" value="5">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="split-min-gap-hours">Минимальный промежуток (часы):</label>
+                                            <input type="number" id="split-min-gap-hours" name="min_gap_hours" step="0.01" min="0" value="0.05">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="split-earliest-start-time">Начало рабочего времени:</label>
+                                            <input type="time" id="split-earliest-start-time" name="earliest_start_time" value="09:00">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="split-latest-end-time">Конец рабочего времени:</label>
+                                            <input type="time" id="split-latest-end-time" name="latest_end_time" value="20:00">
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="split-participants">Участники (названия досок, через запятую):</label>
+                                        <input type="text" id="split-participants" name="participants" placeholder="А-08-24-short, ЭР-05-24" required>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="split-include-holidays" name="include_holidays">
+                                                Включать праздничные дни
+                                            </label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                                <input type="checkbox" id="split-include-weekends" name="include_weekends">
+                                                Включать выходные дни
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Найти сплит окно
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Область результатов -->
+        <div id="results" class="results-section">
+            <h3><i class="fas fa-chart-line"></i> Результаты</h3>
+            <div id="results-content" class="results-content">
+                <p class="no-results">Результаты операций будут отображены здесь</p>
+            </div>
+        </div>
+
+        <!-- Индикатор загрузки -->
+        <div id="loading" class="loading-overlay">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Выполняется операция...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
