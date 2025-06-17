@@ -40,10 +40,10 @@ app.add_middleware(
 )
 
 # Подключение статических файлов
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Настройка шаблонов
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 # Подключение роутеров
 app.include_router(health_router)
