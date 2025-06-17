@@ -83,8 +83,8 @@ class MPEIRuzParser:
 
         # Настройка опций Firefox
         firefox_options = FirefoxOptions()
-        if headless:
-            firefox_options.add_argument("--headless")
+        firefox_options.binary_location = "/usr/bin/firefox"
+        firefox_options.add_argument("--headless")
         firefox_options.add_argument("--width=1920")
         firefox_options.add_argument("--height=1080")
         firefox_options.set_preference("intl.accept_languages", "ru-RU, ru")
