@@ -474,9 +474,6 @@ class ScheduleAnalyzer:
                 self.logger.info("Общее окно не найдено")
                 return None
 
-            for window in possible_windows:
-                print(window)
-
             now = datetime.combine(start_date, earliest_start_time)
             best_window = max(
                 possible_windows,
